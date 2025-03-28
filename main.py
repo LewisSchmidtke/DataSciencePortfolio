@@ -95,7 +95,7 @@ sns.boxplot(
     hue="Metric",
     palette=["#1f77b4", "#ff7f0e"]
 )
-plt.title("Industry Cyberattack Impact: Financial Loss vs. Users Impacted", fontsize=18, fontweight='bold')
+plt.title("Industry Cyberattack Impact: Financial Loss vs. Users Impacted", fontsize=16, fontweight='bold')
 plt.legend(fontsize=12, bbox_to_anchor=(1, 1.12))
 plt.xlabel("Target Industry", fontsize=14, labelpad=14)
 plt.ylabel("")
