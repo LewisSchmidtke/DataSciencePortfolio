@@ -55,17 +55,12 @@ class SimpleNN(nn.Module):
         self.fc1 = nn.Linear(input_size, 64)
         self.fc2 = nn.Linear(64, 32)
         self.fc3 = nn.Linear(32, 1)
-        self.bn1 = nn.BatchNorm1d(64)
         self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.2)  # Add dropout
 
     def forward(self, x):
-        # print("0: ", x)
-        # x = self.relu(self.fc1(x))
-        print("Input to fc1 min:", x.min())
-        print("Input to fc1 max:", x.max())
-        print("Input to fc1 nan check:", torch.isnan(x).any())
-        x = self.relu(self.bn1(self.fc1(x)))
-        # print("1: ", x)
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.relu(self.fc2(x))
         return self.fc3(x)
 
@@ -78,18 +73,21 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=10, shuffle
 test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=10, shuffle=False, drop_last=True)
 
 # Initialize the model with input=window_size
-simple_nn = SimpleNN(input_size=train_dataset.window_size)
+simple_nn = SimpleNN(input_size=10)
 criterion = nn.MSELoss() # Use standard mean squared Error
-optimizer = torch.optim.SGD(simple_nn.parameters(), lr=0.001) # Use standard Stochastic gradient Descent
+optimizer = torch.optim.SGD(simple_nn.parameters(), lr=1e-9) # Use standard Stochastic gradient Descent
 
+simple_nn.to(torch.float32)
 
+# inputs and targets are good - value and shape
 
-epochs = 100
+epochs = 200
 for epoch in range(epochs):
     simple_nn.train() # Set to training mode, to allow gradient calculation
     running_loss = 0.0
     for batch_idx, (data, target) in enumerate(train_loader):
-        # print("data: ", data, "\n target: ", target)
+        data = data.to(torch.float32)
+        target = target.to(torch.float32)
         optimizer.zero_grad() # Zeros the gradients
         output = simple_nn(data) # forward pass
         loss = criterion(output.squeeze(), target) # calculate loss
