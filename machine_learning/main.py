@@ -8,9 +8,11 @@ from torch import nn
 
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from datasets import SingleVariableTimeSeriesDataset, DoubleVariableTimeSeriesDataset
 from models import SimpleNN, SequenceVectorLSTM
+
 
 # Extract data
 df = pd.read_csv('../data/Stock Market Dataset.csv')
@@ -29,7 +31,7 @@ testing_df = df.iloc[1000:]
 double_var_train = DoubleVariableTimeSeriesDataset(training_df)
 double_var_test = DoubleVariableTimeSeriesDataset(testing_df)
 double_var_train_loader = torch.utils.data.DataLoader(double_var_train, batch_size=64, shuffle=True)
-double_var_test_loader = torch.utils.data.DataLoader(double_var_test, batch_size=1, shuffle=True)
+double_var_test_loader = torch.utils.data.DataLoader(double_var_test, batch_size=1, shuffle=False)
 
 # Initialize both train and test dataset
 train_dataset = SingleVariableTimeSeriesDataset(training_df, data_column="Nasdaq_100_Price",previous_days=10)
@@ -43,7 +45,7 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=Fa
 LEARNING_RATE_NN = 1e-9
 EPOCHS_NN = 1000
 LEARNING_RATE_LSTM = 0.01
-EPOCHS_LSTM = 1000
+EPOCHS_LSTM = 500
 # Variables to check if training should be done
 NN_TRAINING = False
 LSTM_TRAINING = True
@@ -103,6 +105,9 @@ if NN_TRAINING:
 # ----------------------------------------------------------------------------------------------
 # -------------------------- LSTM TRAINING AND EVAL --------------------------------------------
 
+real_values = []
+predicted_values = []
+
 if LSTM_TRAINING:
     scaler = double_var_train.get_scaler()
     for epoch in range(EPOCHS_LSTM):
@@ -135,9 +140,35 @@ if LSTM_TRAINING:
             original_target = scaler.inverse_transform(
                 np.hstack((targets.numpy().reshape(-1, 1), np.zeros_like(targets.numpy().reshape(-1, 1))))
             )[:, 0]
+            real_values.append(original_target[0])
             original_prediction = scaler.inverse_transform(
                 np.hstack((normalized_prediction, np.zeros_like(normalized_prediction)))  # Keep 2D shape
             )[:, 0]  # Extract only the price column
-            print("targets: ",original_target, "preds: ", original_prediction, "loss: ", loss, "\n")
+            predicted_values.append(original_prediction[0])
+
+
+# Removes last x=window_size entries so lengths match
+new_df = testing_df.iloc[:len(testing_df) - double_var_test.window_size].copy()
+new_df.loc[:, "Predicted_Values"] = predicted_values
+new_df.loc[:, "Real_Values"] = real_values
+
+sns.set_style("whitegrid")
+fig = plt.figure(figsize=(18, 8))
+ax1 = sns.lineplot(data=new_df, y="Real_Values", x="Date", color="g", label="Real Data")
+ax2 = sns.lineplot(data=new_df, y="Predicted_Values", x="Date", color="r", label="Predicted Data")
+
+plt.title("Real and Predicted Price of the Nasdaq 100", fontweight="bold", fontsize=18)
+plt.ylabel("Price ($)", fontsize=16)
+plt.xlabel("Date", fontsize=16)
+
+ax1.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1,2,3,4,5,6,7,8,9,10,11,12], bymonthday=1))  # Displaying Quarters on X-Axis
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+ax2.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1,2,3,4,5,6,7,8,9,10,11,12], bymonthday=1))  # Displaying Quarters on X-Axis
+ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+plt.tight_layout()
+plt.legend(fontsize=16)
+plt.savefig("../Plots/real_vs_predicted_price_nasdaq100.png")
+
 
 
