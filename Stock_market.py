@@ -28,7 +28,8 @@ for company in companies_with_color:
     company_name, company_color = company
     rgb_color = [value / 255 for value in company_color]
     df[company_name] = df[company_name].rolling(window=6, min_periods=1).mean()
-    ax = sns.lineplot(data=df, x="Date", y=company_name, linewidth=2, label=company_name.replace("_", " ") + " Price", color = rgb_color)
+    ax = sns.lineplot(data=df, x="Date", y=company_name, linewidth=2, label=company_name.replace("_", " ") ,
+                      color = rgb_color)
     ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10], bymonthday=1))  # Displaying Quarters on X-Axis
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
