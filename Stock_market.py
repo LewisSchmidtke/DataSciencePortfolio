@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from kaggle.api.kaggle_api_extended import KaggleApi
 
-api = KaggleApi()
-api.authenticate()
-api.dataset_download_files('saketk511/2019-2024-us-stock-market-data', path='data/', unzip=True)
+# api = KaggleApi()
+# api.authenticate()
+# api.dataset_download_files('saketk511/2019-2024-us-stock-market-data', path='data/', unzip=True)
 
 # Extract data
 df = pd.read_csv('data/Stock Market Dataset.csv')
@@ -128,3 +128,59 @@ plt.xlabel("")
 plt.tight_layout()
 plt.savefig("./Plots/Volatility_Tech+Crypto.png")
 plt.show()
+
+# -------------------------- Tech Share in S&P 500 ------------------------------------------------
+
+# Cumulative price for each entry of the big 8 tech stock
+df["Tech Stock Prices"] =df[["Tesla_Price", "Apple_Price", "Microsoft_Price",
+                             "Google_Price", "Nvidia_Price", "Netflix_Price", "Amazon_Price", "Meta_Price"]].sum(axis=1)
+# Calculate what percentage of the SP500 Price is made up of the big 8 tech stocks
+df["Percentage_Top8_SP500"] = (df["Tech Stock Prices"] / df["S&P_500_Price"]) * 100
+
+df["Tech_Stock_Prices_Rolling"] = df["Tech Stock Prices"].rolling(window=10, min_periods=1).mean()
+df["Percentage_Top8_SP500_Rolling"] = df["Percentage_Top8_SP500"].rolling(window=10, min_periods=1).mean()
+df["S&P_500_Price_Rolling"] = df["S&P_500_Price"].rolling(window=10, min_periods=1).mean()
+
+sns.set_style("white")
+# Create a single figure and axis
+fig, ax1 = plt.subplots(figsize=(14, 6))
+
+# First y-axis (left) for stock prices
+sns.lineplot(ax=ax1, data=df, x="Date", y="Tech_Stock_Prices_Rolling", color="#39FF14", label="Main 8 Tech Stock Prices", linewidth=3)
+sns.lineplot(ax=ax1, data=df, x="Date", y="S&P_500_Price_Rolling", color="#4A0072", label="S&P 500 Price", linewidth=3)
+ax1.set_ylabel("Stock Prices", fontsize=14, fontweight='bold', color='black')
+ax1.tick_params(axis='y', labelcolor='black')
+
+# Second y-axis (right) for percentage
+ax2 = ax1.twinx()
+sns.lineplot(ax=ax2, data=df, x="Date", y="Percentage_Top8_SP500_Rolling", linewidth=2, color="#6D8196", label="% of S&P 500 Market Value", linestyle="--", markevery=30)
+ax2.set_ylabel("Percentage %", fontsize=14, fontweight='bold', color='#6D8196')
+ax2.tick_params(axis='y', labelcolor='#6D8196')
+
+# Set x-axis formatting
+ax1.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10], bymonthday=1))
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+ax1.tick_params(axis='x', rotation=45)
+
+# Title and x-axis label
+ax1.set_title("Silicon Valley's Market Footprint: Tech Prices and S&P 500 Composition", fontsize=18, fontweight='bold')
+ax1.set_xlabel("Date", fontsize=14, fontweight='bold')
+
+# Combine legends from both axes
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left', fontsize=12)
+
+# Remove the default legend from the second axis
+ax2.get_legend().remove()
+
+plt.tight_layout()
+plt.savefig("./Plots/S&P500_Market_Composition.png")
+plt.show()
+
+
+
+
+
+
+
