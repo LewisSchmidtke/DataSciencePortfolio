@@ -178,6 +178,144 @@ plt.tight_layout()
 plt.savefig("./Plots/S&P500_Market_Composition.png")
 plt.show()
 
+# -------------------------- Risk Return Scatter Plot ------------------------------------------------
+
+# Get all relevant prices
+resource_columns = ["Copper_Price","Platinum_Price","Silver_Price","Gold_Price",]
+company_stocks = [value[0] for value in companies_with_color]
+company_stocks.append("Berkshire_Price")
+analyze_columns = resource_columns + company_stocks
+
+# Fix prices for all price columns
+for column in analyze_columns:
+        df[column] = df[column].astype(str).str.replace(",", "")
+        df[column] = df[column].astype(float)
+
+# Calculation for risk and return for a given window
+window_months = 6
+window_days = window_months * 30 #approx
+results = {
+        'company': [],
+        'return': [],
+        'risk': [],
+        'end_date':[],
+        'start_date':[],
+        'period': [],
+}
+# Create a period column for grouping (year and half: '2018H1', '2018H2', etc.)
+df['year'] = df["Date"].dt.year
+df['month'] = df["Date"].dt.month
+df['half'] = (df['month'] > 6).astype(int) + 1  # 1 for Jan-Jun, 2 for Jul-Dec
+df['period'] = df['year'].astype(str) + 'H' + df['half'].astype(str)
+
+for stock in analyze_columns:
+    grouped = df.groupby([column])
+
+    for period, group in grouped:
+        group[f"{stock}_return"] = group[stock].pct_change()
+        start_price = group[stock].iloc[0]
+        end_price = group[stock].iloc[-1]
+        # Return and risk for 6-month period in percent
+        period_return = ((end_price / start_price) - 1) * 100
+        period_risk = (group[f"{stock}_return"].std() * np.sqrt(len(group))) * 100
+        start_date = group["Date"].min()
+        end_date = group["Date"].max()
+
+        results['company'].append(stock)
+        results['period'].append(period)
+        results['start_date'].append(start_date)
+        results['end_date'].append(end_date)
+        results['return'].append(period_return)
+        results['risk'].append(period_risk)
+
+# Define view limits for the main plot --> max x: 100% return, max y: 300% risk
+main_view_limits = (100, 300)
+result_df = pd.DataFrame(results)
+# Create separate DF with values outside the main view limits return
+outlier_df = result_df[result_df['return'] >= main_view_limits[0]]
+
+sns.set_style("whitegrid")
+fig, ax15 = plt.subplots(figsize=(14, 6))
+scatter = sns.scatterplot(data=result_df, x="return", y="risk", hue="company", style="company",
+                          alpha=0.8, palette="Dark2", s=200, ax=ax15)
+# Set axis limits
+ax15.set_xlim(-30, main_view_limits[0])
+ax15.set_ylim(-1, main_view_limits[1])
+
+# Add a reference line at x = 0 to mark negative returns
+ax15.axvline(x=0, color='r', linestyle='-', alpha=0.3)
+ax15.tick_params(axis='both', which='major', labelsize=18) # Increase tick sizes
+
+if not outlier_df.empty:
+    # The dimensions are [left, bottom, width, height] in figure coordinates
+    inset_ax = fig.add_axes([0.7, 0.62, 0.25, 0.25])
+    # Extract for color matching
+    legend = ax15.get_legend()
+    color_mapping = {}
+    marker_mapping = {}
+
+    if legend:
+        for text, handle in zip(legend.get_texts(), legend.legend_handles):
+            company = text.get_text()
+
+            if hasattr(handle, 'get_marker'): # Marker
+                marker_mapping[company] = handle.get_marker()
+            if hasattr(handle, 'get_color'): # Color
+                color_mapping[company] = handle.get_color()
+            elif hasattr(handle, 'get_facecolor'):
+                color_mapping[company] = handle.get_facecolor()
+            elif hasattr(handle, 'get_facecolors'):
+                color_mapping[company] = handle.get_facecolors()[0]
+
+    # Plot outliers in the inset
+    for company in outlier_df['company'].unique():
+        company_data = outlier_df[outlier_df['company'] == company]
+
+        # Get the color and marker for this stock
+        color = color_mapping.get(company, 'gray')  # Default to gray if not found
+        marker = marker_mapping.get(company, 'o')  # Default to circle if not found
+
+        sns.scatterplot(
+            x=company_data['return'],
+            y=company_data['risk'],
+            c=[color],  # Use the same color as main plot
+            marker=marker,  # Use the same marker as main plot
+            s=160,
+            alpha=0.8,
+            legend=False,
+            ax=inset_ax,
+        )
+
+    # Configure inset axes
+    inset_ax.set_title('Outliers (High Returns)', fontsize=14)
+    inset_ax.grid(True, linestyle='--', alpha=0.6)
+    # set inset axes limits based on the data
+    inset_ax.set_ylim(0, outlier_df['risk'].max() * 1.1)
+    inset_ax.set_xlim(main_view_limits[0], outlier_df['return'].max() * 1.1)
+    inset_ax.set_xlabel('Asset Return (%)')
+    inset_ax.set_ylabel('Asset Risk (%)')
+    # box around the inset
+    inset_ax.patch.set_edgecolor('black')
+    inset_ax.patch.set_linewidth(1)
+
+ax15.legend(loc="upper left")
+ax15.set_title("Asset Risk-Return Comparison for 6 Month Periods",fontsize=18, fontweight='bold')
+ax15.set_xlabel("Asset Return (%)", fontsize=14, fontweight='bold')
+ax15.set_ylabel("Asset Risk (%)", fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig('./Plots/risk-return_comparison.png')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
