@@ -47,9 +47,29 @@ plt.tight_layout()
 plt.show()
 plt.close()
 
+# 2. ----------------- General Trends per year: Nr of Attacks per year per Country -----------------
+
+# Extracting attacks per year per attack type and applying 3 year rolling average to uncover general trends
+attack_trends_country = df.groupby(["Year", "Country"]).size().reset_index(name="Number of Attacks")
+attack_trends_country["Smoothed Attacks"] = attack_trends_country.groupby("Country")["Number of Attacks"].transform(lambda x: x.rolling(3, min_periods=1).mean())
+
+# Customizing figure aesthetics
+sns.set_theme(style="whitegrid")
+plt.figure(figsize=(16, 6))
+plt.title("Cyberattack Trends Country: 3-Year Rolling Average", fontsize=22, fontweight="bold", pad=20)
+plt.xlabel("Year", fontsize=14, labelpad=10)
+plt.ylabel("Number of Attacks", fontsize=14, labelpad=10)
+plt.legend(title="Attacked Country", bbox_to_anchor=(1, 1), loc="upper left")
+
+# Plotting the data
+sns.lineplot(data=attack_trends_country, x="Year", y="Smoothed Attacks", hue="Country",
+             palette="deep", alpha=.8, linewidth=2, marker="X")
+plt.tight_layout()
+plt.show()
+plt.close()
 
 
-# 2. ----------------- Correlation between Attack type, Financial Loss and Targeted Industry -----------------
+# 3. ----------------- Correlation between Attack type, Financial Loss and Targeted Industry -----------------
 # Transform data to be used in Heatmap-style plot
 heatmap_data = df.pivot_table(
     index="Attack Type",
@@ -79,7 +99,7 @@ plt.tight_layout()
 plt.show()
 
 
-# 3. ----------------- Financial Loss vs. Number of Affected Users by Targeted Industry -----------------
+# 4. ----------------- Financial Loss vs. Number of Affected Users by Targeted Industry -----------------
 df["Number of Affected Users in 10000"] = df["Number of Affected Users"] / 10000
 df_melted = df.melt(id_vars=["Target Industry"], value_vars=["Financial Loss (in Million $)", "Number of Affected Users in 10000"],
                     var_name="Metric", value_name="Value")
