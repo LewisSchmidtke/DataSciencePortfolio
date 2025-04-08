@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 # Initialize kaggle api call
@@ -123,3 +125,70 @@ sns.despine(offset=20, trim=True)
 plt.tight_layout()
 plt.show()
 
+# 5. ----------------- Security Loop holes ------------------------
+# 5.1 ----------------- Security Loop hole Trends ------------------------
+
+# Extracting attacks per year per attack type and applying 3 year rolling average to uncover general trends
+trends_vulnerability = df.groupby(["Year", "Security Vulnerability Type"]).size().reset_index(name="Number of Attacks")
+trends_vulnerability["Rolling Vulnerability Type"] = trends_vulnerability.groupby("Security Vulnerability Type")["Number of Attacks"].transform(lambda x: x.rolling(3, min_periods=1).mean())
+
+# Customizing figure aesthetics
+sns.set_theme(style="whitegrid")
+plt.figure(figsize=(16, 6))
+plt.title("Cyberattack Trends Vulnerability Type", fontsize=22, fontweight="bold", pad=20)
+plt.xlabel("Year", fontsize=14, labelpad=10)
+plt.ylabel("Number of Attacks", fontsize=14, labelpad=10)
+plt.legend(title="Vulnerability Type", bbox_to_anchor=(1, 1), loc="upper left")
+
+# Plotting the data
+sns.lineplot(data=trends_vulnerability, x="Year", y="Rolling Vulnerability Type", hue="Security Vulnerability Type",
+             palette="Set1", alpha=.8, linewidth=2, marker="X")
+plt.tight_layout()
+plt.show()
+
+# 5.2 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+sns.violinplot(data=df, y="Number of Affected Users", x="Security Vulnerability Type", color="#808080")
+sns.stripplot(data=df, y="Number of Affected Users", x="Security Vulnerability Type", hue="Security Vulnerability Type")
+plt.tight_layout()
+plt.show()
+# 5.3 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+palette = sns.color_palette("Set2", n_colors=len(df["Attack Source"].unique()))
+ax = sns.violinplot(data=df, y="Number of Affected Users", x="Attack Source",
+                   palette=palette, alpha=0.6, inner=None)
+
+# Add box plot with smaller width
+sns.boxplot(data=df, y="Number of Affected Users", x="Attack Source",
+           palette=palette, width=0.2, ax=ax,
+           boxprops={'zorder': 2, 'facecolor': 'none'})
+
+# Add strip plot with jittered points
+sns.stripplot(data=df, y="Number of Affected Users", x="Attack Source",
+             palette=palette, jitter=True, size=4, ax=ax)
+plt.tight_layout()
+plt.show()
+# 5.4 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+sns.violinplot(data=df, y="Financial Loss (in Million $)", x="Security Vulnerability Type", color="#808080")
+sns.stripplot(data=df, y="Financial Loss (in Million $)", x="Security Vulnerability Type", hue="Security Vulnerability Type")
+plt.tight_layout()
+plt.show()
+# 5.5 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+sns.violinplot(data=df, y="Financial Loss (in Million $)", x="Attack Source", color="#808080")
+sns.stripplot(data=df, y="Financial Loss (in Million $)", x="Attack Source", hue="Attack Source")
+plt.tight_layout()
+plt.show()
+# 5.6 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+sns.violinplot(data=df, y="Incident Resolution Time (in Hours)", x="Security Vulnerability Type", color="#808080")
+sns.stripplot(data=df, y="Incident Resolution Time (in Hours)", x="Security Vulnerability Type", hue="Security Vulnerability Type")
+plt.tight_layout()
+plt.show()
+# 5.7 ----------------- Security Loop hole Trends ------------------------
+plt.figure(figsize=(18, 8))
+sns.violinplot(data=df, y="Incident Resolution Time (in Hours)", x="Attack Source", color="#808080")
+sns.stripplot(data=df, y="Incident Resolution Time (in Hours)", x="Attack Source", hue="Attack Source")
+plt.tight_layout()
+plt.show()
