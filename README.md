@@ -1,5 +1,5 @@
 # DataScience and Machine Learning Portfolio
-This repository is used to create visually appealing plots for various datasets to be displayed in this README. As I am not a web developer and do not want to create my own website, I believe that having a separate repository showcasing my visualization skills alongside my regular programming work is a better alternative.
+This repository is used to create visually appealing plots for various datasets to be displayed in this README. All relevant graphics can be found here, whereas some selected plots can also be found on my portfolio website.
 
 ## Data Overview
 - 2019-2024 US Stock Market Data (ONGOING) ✔️
