@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 # Initialize kaggle api call
-# api = KaggleApi()
-# api.authenticate()
-# api.dataset_download_files('atharvasoundankar/global-cybersecurity-threats-2015-2024', path='data/', unzip=True)
+api = KaggleApi()
+api.authenticate()
+api.dataset_download_files('atharvasoundankar/global-cybersecurity-threats-2015-2024', path='data/', unzip=True)
 
 
 # Extract data
